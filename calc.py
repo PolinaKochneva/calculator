@@ -3,99 +3,81 @@
 - Функцию calc(raw_expression).
 - Любые вспомогательные функции.
 """
+# Константы, обозначающие тип токена
+TOKEN_NUMBER = "number"
+TOKEN_OPERATOR = "operator"
+TOKEN_PARENTHESIS = "parenthesis"
 
-tokenized_expression = []
+# Константы, обозначающие класс символа
+DIGIT = "digit"
+POINT = "point"
+OPERATOR = "operator"
+PARENTHESIS = "parenthesis"
+OTHER = "other"
 
-    
+# Константы, обозначающие состояние КА
+NEW_TOKEN = "new_token"
+NUMBER_INTEGER_PART = "number_integer_part"
+NUMBER_FRACTIONAL_PART = "number_fractional_part"
+ERROR = "error"
+
+# Поддерживаемые математические операции в выражении вместе с их реализацией
+# и приоритетом. Чем больше значение поля "priority", тем выше приоритет
+OPERATORS = {
+    "*": {"func": lambda a, b: a * b, "priority": 2},
+    "/": {"func": lambda a, b: a / b, "priority": 2},
+    "+": {"func": lambda a, b: a + b, "priority": 1},
+    "-": {"func": lambda a, b: a - b, "priority": 1},
+}
+
+
+def start_accumulating_number():
+    ...
+
+def accumulate_number():
+    ...
+
+FSM = {
+    DIGIT : {       
+         # Текущее состояние        Новое состояние             Действие
+        NEW_TOKEN:              (NUMBER_INTEGER_PART,    start_accumulating_number),
+        NUMBER_INTEGER_PART:    (NUMBER_INTEGER_PART,    accumulate_number),
+        NUMBER_FRACTIONAL_PART: (NUMBER_FRACTIONAL_PART, None)
+    },
+    POINT : {
+        # Текущее состояние        Новое состояние         Действие
+        NEW_TOKEN:              (NUMBER_FRACTIONAL_PART, start_accumulating_number),
+        NUMBER_INTEGER_PART:    (NUMBER_FRACTIONAL_PART, accumulate_number),
+        NUMBER_FRACTIONAL_PART: (ERROR,                  None)
+    },   
+    OPERATOR: {       
+         # Текущее состояние   Новое состояние   Действие
+        NEW_TOKEN:              (NEW_TOKEN,    start_accumulating_number),
+        NUMBER_INTEGER_PART:    (NEW_TOKEN,    accumulate_number),
+        NUMBER_FRACTIONAL_PART: (NEW_TOKEN, None)
+    },
+    PARENTHESIS: {       
+         # Текущее состояние   Новое состояние   Действие
+        NEW_TOKEN:              (NEW_TOKEN,    start_accumulating_number),
+        NUMBER_INTEGER_PART:    (NEW_TOKEN,    accumulate_number),
+        NUMBER_FRACTIONAL_PART: (NEW_TOKEN, None)
+    },
+    OTHER: {       
+         # Текущее состояние  Новое состояние   Действие
+        NEW_TOKEN:              (ERROR,    start_accumulating_number),
+        NUMBER_INTEGER_PART:    (ERROR,    accumulate_number),
+        NUMBER_FRACTIONAL_PART: (ERROR, None)
+    }
+}
+
+
+
 def calc(raw_expression):
-    global tokenized_expression
-    tokenized_expression = []
-    start(raw_expression)
-
-def start(expression):
-    i = 0
-    token = expression[i]
-    match token:
-        case '0' | '1' | '2' | '3'| '4' | '5' | '6' | '7' | '8' | '9':
-            save_integer_part_of_number(token, expression, i)
-        case "(" | ")":
-            ...
-        case "*" | '/' | '-' | '+':
-            ...
-        case '.':
-            save_fractional_part_of_number(token, expression, i)
-        case _:
-            return None
-
-def save_integer_part_of_number(token, expression, i):
-   global tokenized_expression
-   integer_part_of_number_list = []
-   i += 1
-   integer_part_of_number_list += token
-   token = expression[i]
-   match token:
-        case '0' | '1' | '2' | '3'| '4' | '5' | '6' | '7' | '8' | '9':
-            save_integer_part_of_number(token, expression, i)
-        case "(" | ")":
-            integer_part_of_number = "".join(integer_part_of_number_list)
-            tokenized_expression += integer_part_of_number
-            ...
-        case "*" | '/' | '-' | '+':
-            integer_part_of_number = "".join(integer_part_of_number_list)
-            tokenized_expression += integer_part_of_number
-            ...
-        case '.':
-            integer_part_of_number = "".join(integer_part_of_number_list)
-            save_fractional_part_of_number(token, expression, i, integer_part_of_number)
-            ...
-        case _:
-            return None
-
-
-def save_fractional_part_of_number(token, expression, i, integer_part_of_number):
-    global tokenized_expression
-    fractional_part_of_number = []
-    i += 1
-    fractional_part_of_number += token
-    token = expression[i]
-    match token:
-        case '0' | '1' | '2' | '3'| '4' | '5' | '6' | '7' | '8' | '9':
-            save_fractional_part_of_number(token, expression, i, integer_part_of_number)
-        case "(" | ")":
-            number = "".join(fractional_part_of_number)
-            tokenized_expression += number
-            ...
-        case "*" | '/' | '-' | '+':
-            number = "".join(fractional_part_of_number)
-            tokenized_expression += number
-            ...
-        case '.':
-            return None
-        case _:
-            return None
-
-def read_single_token(token, expression, i):
-    single_token = []
-    i += 1
-    fractional_part_of_number += token
-    token = expression[i]
-    match token:
-        case '0' | '1' | '2' | '3'| '4' | '5' | '6' | '7' | '8' | '9':
-            save_integer_part_of_number(token, expression, i)
-        case "(" | ")":
-            read_single_token(token, expression, i)
-        case "*" | '/' | '-' | '+':
-            read_single_token(token, expression, i)
-        case '.':
-            save_fractional_part_of_number(token, expression, i)
-        case _:
-            return None
-
-
+    ...
 
 if __name__ == "__main__":
     expressions = [
-        "15+3",
+        ".6+3",
         "2+3",              # 5
         "1-2*3",            # -5
         "(1-2)*3",          # -3
