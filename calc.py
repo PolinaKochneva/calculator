@@ -37,38 +37,43 @@ def start_accumulating_number():
 def accumulate_number():
     ...
 
+def accumulate_operator():
+    ...
+
+def accumulate_parenthesis():
+    ...
+
+
 FSM = {
-    DIGIT : {       
-         # Текущее состояние        Новое состояние             Действие
-        NEW_TOKEN:              (NUMBER_INTEGER_PART,    start_accumulating_number),
-        NUMBER_INTEGER_PART:    (NUMBER_INTEGER_PART,    accumulate_number),
-        NUMBER_FRACTIONAL_PART: (NUMBER_FRACTIONAL_PART, None)
-    },
-    POINT : {
+    # Символ
+    DIGIT: {
         # Текущее состояние        Новое состояние         Действие
+        NEW_TOKEN:              (NUMBER_INTEGER_PART, start_accumulating_number),
+        NUMBER_INTEGER_PART:    (NUMBER_INTEGER_PART, accumulate_number),
+        NUMBER_FRACTIONAL_PART: (NUMBER_FRACTIONAL_PART, accumulate_number),
+    },
+    POINT: {
         NEW_TOKEN:              (NUMBER_FRACTIONAL_PART, start_accumulating_number),
         NUMBER_INTEGER_PART:    (NUMBER_FRACTIONAL_PART, accumulate_number),
-        NUMBER_FRACTIONAL_PART: (ERROR,                  None)
-    },   
-    OPERATOR: {       
-         # Текущее состояние   Новое состояние   Действие
-        NEW_TOKEN:              (NEW_TOKEN,    start_accumulating_number),
-        NUMBER_INTEGER_PART:    (NEW_TOKEN,    accumulate_number),
-        NUMBER_FRACTIONAL_PART: (NEW_TOKEN, None)
+        NUMBER_FRACTIONAL_PART: (ERROR, None),
     },
-    PARENTHESIS: {       
-         # Текущее состояние   Новое состояние   Действие
-        NEW_TOKEN:              (NEW_TOKEN,    start_accumulating_number),
-        NUMBER_INTEGER_PART:    (NEW_TOKEN,    accumulate_number),
-        NUMBER_FRACTIONAL_PART: (NEW_TOKEN, None)
+    OPERATOR: {
+        NEW_TOKEN:              (NEW_TOKEN, accumulate_operator),
+        NUMBER_INTEGER_PART:    (NEW_TOKEN, accumulate_operator),
+        NUMBER_FRACTIONAL_PART: (NEW_TOKEN, accumulate_operator),
     },
-    OTHER: {       
-         # Текущее состояние  Новое состояние   Действие
-        NEW_TOKEN:              (ERROR,    start_accumulating_number),
-        NUMBER_INTEGER_PART:    (ERROR,    accumulate_number),
-        NUMBER_FRACTIONAL_PART: (ERROR, None)
-    }
+    PARENTHESIS: {
+        NEW_TOKEN:              (NEW_TOKEN, accumulate_parenthesis),
+        NUMBER_INTEGER_PART:    (NEW_TOKEN, accumulate_parenthesis),
+        NUMBER_FRACTIONAL_PART: (NEW_TOKEN, accumulate_parenthesis),
+    },
+    OTHER: {
+        NEW_TOKEN:              (ERROR, None),
+        NUMBER_INTEGER_PART:    (ERROR, None),
+        NUMBER_FRACTIONAL_PART: (ERROR, None),
+    },
 }
+
 
 
 
