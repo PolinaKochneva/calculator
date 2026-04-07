@@ -3,77 +3,87 @@
 - Функцию calc(raw_expression).
 - Любые вспомогательные функции.
 """
-# Константы, обозначающие тип токена
-TOKEN_NUMBER = "number"
-TOKEN_OPERATOR = "operator"
-TOKEN_PARENTHESIS = "parenthesis"
-
-# Константы, обозначающие класс символа
-DIGIT = "digit"
-POINT = "point"
-OPERATOR = "operator"
-PARENTHESIS = "parenthesis"
-OTHER = "other"
-
-# Константы, обозначающие состояние КА
-NEW_TOKEN = "new_token"
-NUMBER_INTEGER_PART = "number_integer_part"
-NUMBER_FRACTIONAL_PART = "number_fractional_part"
-ERROR = "error"
-
-# Поддерживаемые математические операции в выражении вместе с их реализацией
-# и приоритетом. Чем больше значение поля "priority", тем выше приоритет
-OPERATORS = {
-    "*": {"func": lambda a, b: a * b, "priority": 2},
-    "/": {"func": lambda a, b: a / b, "priority": 2},
-    "+": {"func": lambda a, b: a + b, "priority": 1},
-    "-": {"func": lambda a, b: a - b, "priority": 1},
-}
-
-
-def start_accumulating_number():
-    ...
-
-def accumulate_number():
-    ...
-
-FSM = {
-    DIGIT : {       
-         # Текущее состояние        Новое состояние             Действие
-        NEW_TOKEN:              (NUMBER_INTEGER_PART,    start_accumulating_number),
-        NUMBER_INTEGER_PART:    (NUMBER_INTEGER_PART,    accumulate_number),
-        NUMBER_FRACTIONAL_PART: (NUMBER_FRACTIONAL_PART, None)
-    },
-    POINT : {
-        # Текущее состояние        Новое состояние         Действие
-        NEW_TOKEN:              (NUMBER_FRACTIONAL_PART, start_accumulating_number),
-        NUMBER_INTEGER_PART:    (NUMBER_FRACTIONAL_PART, accumulate_number),
-        NUMBER_FRACTIONAL_PART: (ERROR,                  None)
-    },   
-    OPERATOR: {       
-         # Текущее состояние   Новое состояние   Действие
-        NEW_TOKEN:              (NEW_TOKEN,    start_accumulating_number),
-        NUMBER_INTEGER_PART:    (NEW_TOKEN,    accumulate_number),
-        NUMBER_FRACTIONAL_PART: (NEW_TOKEN, None)
-    },
-    PARENTHESIS: {       
-         # Текущее состояние   Новое состояние   Действие
-        NEW_TOKEN:              (NEW_TOKEN,    start_accumulating_number),
-        NUMBER_INTEGER_PART:    (NEW_TOKEN,    accumulate_number),
-        NUMBER_FRACTIONAL_PART: (NEW_TOKEN, None)
-    },
-    OTHER: {       
-         # Текущее состояние  Новое состояние   Действие
-        NEW_TOKEN:              (ERROR,    start_accumulating_number),
-        NUMBER_INTEGER_PART:    (ERROR,    accumulate_number),
-        NUMBER_FRACTIONAL_PART: (ERROR, None)
-    }
-}
-
-
 
 def calc(raw_expression):
-    ...
+    tokens = tokenize(raw_expression)
+    postfix = postfix_notation(tokens)
+    return postfix
+
+def tokenize(expression):
+    tokens = []
+    current_number = ""
+    i = 0
+    
+    while i < len(expression):
+        char = expression[i]
+        
+        if char.isdigit():
+            current_number = char
+            i += 1
+            while i < len(expression) and (expression[i].isdigit() or expression[i] == '.'):
+                current_number += expression[i]
+                i += 1
+
+            if current_number.count('.') > 1:
+                return None
+            tokens.append(('number', float(current_number)))
+            current_number = ""
+            continue
+        
+        elif char in '+-*/':
+            tokens.append(('operator', char))
+        
+        elif char in '()':
+            tokens.append(('parenthesis', char))
+        
+        elif char == '.':
+
+            current_number = "0."
+            i += 1
+            while i < len(expression) and expression[i].isdigit():
+                current_number += expression[i]
+                i += 1
+            tokens.append(('number', float(current_number)))
+            current_number = ""
+            continue
+        
+        else:
+            return None  
+        
+        i += 1
+    
+    return tokens
+
+
+def postfix_notation(tokens):
+    stack = []
+    queue = []
+    priority = {'+': 1, '-': 1, '*': 2, '/': 2}
+
+    for token in tokens:
+        char = token[1]
+        if isinstance(char, (int, float)):
+            queue.append(char)
+        elif char in '+-*/':
+            while stack and (priority[stack[-1]] >= priority[char]):
+            #while not (stack[-1] in low_priority and char in high_priority):
+                queue.append(stack.pop())
+            stack.append(char)
+        elif char == '(':
+            stack.append(char)
+        elif char ==')':
+            if stack:
+                while stack[-1] != '(':
+                    queue.append(stack[-1]) 
+            stack.pop()
+        else:
+            while len(stack) > 0:
+                if stack[-1] == '(':
+                    return None
+                queue.append(stack.pop())
+
+    return queue
+
 
 if __name__ == "__main__":
     expressions = [
