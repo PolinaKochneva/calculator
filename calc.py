@@ -8,7 +8,12 @@ def calc(raw_expression):
     tokens = tokenize(raw_expression)
     if tokens is None:
         return None
+    tokens = validate_tokens(tokens)
+    if tokens is None:
+        return None
     postfix_tokens = postfix_notation(tokens)
+    if postfix_tokens is None:
+        return None
     result = evaluate_postfix(postfix_tokens)
     return result
 
@@ -16,6 +21,9 @@ def tokenize(expression):
     tokens = []
     current_number = ""
     i = 0
+    
+    if expression == '':
+        return None
     
     while i < len(expression):
         char = expression[i]
@@ -75,19 +83,54 @@ def postfix_notation(tokens):
             stack.append(char)
         elif char ==')':
             while stack and stack[-1] != '(':
-                queue.append(stack.pop()) 
-            stack.pop()
-        '''else:
-            while len(stack) > 0:
-                if stack[-1] == '(':
-                    return None
-                queue.append(stack.pop())'''
+                queue.append(stack.pop())
+            if not stack:  
+                return None
+            stack.pop() 
     while stack:
         if stack[-1] == '(':
             return None
         queue.append(stack.pop())
 
     return queue
+
+def validate_tokens(tokens):
+    if not tokens:
+        return None
+    elif tokens[0][0] == 'operator':
+        return None
+    elif tokens[-1][0] == 'operator':
+        return None
+    
+    for i in range(len(tokens)-1):
+        current_token = tokens[i][0]
+        next_token =tokens[i+1][0]
+
+        # Число перед открывающей скобкой
+        if current_token == 'number' and next_token == 'parenthesis' and tokens[i+1][1] == '(':
+            return None
+        
+        # Закрывающая скобка перед числом
+        if current_token == 'parenthesis' and tokens[i][1] == ')' and next_token == 'number':
+            return None
+        
+        # Оператор перед закрывающей скобкой
+        if current_token == 'operator' and next_token == 'parenthesis' and tokens[i+1][1] == ')':
+            return None
+        
+        # Открывающая скобка перед оператором
+        if current_token == 'parenthesis' and tokens[i][1] == '(' and next_token == 'operator':
+            return None
+        
+        # Число перед числом (без операции)
+        if current_token == 'number' and next_token == 'number':
+            return None
+        
+        #Два оператора подряд
+        if current_token == 'operator' and next_token == 'operator':
+            return None
+      
+    return tokens
 
 def evaluate_postfix(postfix_tokens):
     stack = []
@@ -100,6 +143,8 @@ def evaluate_postfix(postfix_tokens):
             left = stack.pop()
             result = apply_operation(operand, left, right)
             stack.append(result)
+    if len(stack) != 1:  
+        return None
     return stack[-1]        
 
 def apply_operation(op, left, right):
@@ -121,7 +166,8 @@ if __name__ == "__main__":
         "1-2*3",            # -5
         "(1-2)*3",          # -3
         "(1+(2/2))-(3-5)",  # 4
-        "1/2-1/2"           # 0
+        "1/2-1/2", 
+        "15/(7-(1+1))*3-(2+(1+1))*15/(7-(200+1))*3-(2+(0.5+1.5))*(15/(7-(1+1))*3-(2+(1+1))+15/(7-(1+1))*3-(2+(1+1)))"          # -30.0721649485
     ]
 
     for expr in expressions:
