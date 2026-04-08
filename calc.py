@@ -6,8 +6,11 @@
 
 def calc(raw_expression):
     tokens = tokenize(raw_expression)
-    postfix = postfix_notation(tokens)
-    return postfix
+    if tokens is None:
+        return None
+    postfix_tokens = postfix_notation(tokens)
+    result = evaluate_postfix(postfix_tokens)
+    return result
 
 def tokenize(expression):
     tokens = []
@@ -37,7 +40,8 @@ def tokenize(expression):
             tokens.append(('parenthesis', char))
         
         elif char == '.':
-
+            if expression[i+1] == '.':
+                return None
             current_number = "0."
             i += 1
             while i < len(expression) and expression[i].isdigit():
@@ -54,7 +58,6 @@ def tokenize(expression):
     
     return tokens
 
-
 def postfix_notation(tokens):
     stack = []
     queue = []
@@ -65,24 +68,50 @@ def postfix_notation(tokens):
         if isinstance(char, (int, float)):
             queue.append(char)
         elif char in '+-*/':
-            while stack and (priority[stack[-1]] >= priority[char]):
-            #while not (stack[-1] in low_priority and char in high_priority):
+            while stack and (stack[-1] in '+-*/') and (priority[stack[-1]] >= priority[char]):
                 queue.append(stack.pop())
             stack.append(char)
         elif char == '(':
             stack.append(char)
         elif char ==')':
-            if stack:
-                while stack[-1] != '(':
-                    queue.append(stack[-1]) 
+            while stack and stack[-1] != '(':
+                queue.append(stack.pop()) 
             stack.pop()
-        else:
+        '''else:
             while len(stack) > 0:
                 if stack[-1] == '(':
                     return None
-                queue.append(stack.pop())
+                queue.append(stack.pop())'''
+    while stack:
+        if stack[-1] == '(':
+            return None
+        queue.append(stack.pop())
 
     return queue
+
+def evaluate_postfix(postfix_tokens):
+    stack = []
+    for token in postfix_tokens:
+        if isinstance(token, (int, float)):
+            stack.append(token)
+        elif token in '+-*/':
+            operand = token
+            right = stack.pop()
+            left = stack.pop()
+            result = apply_operation(operand, left, right)
+            stack.append(result)
+    return stack[-1]        
+
+def apply_operation(op, left, right):
+    if op == '+':
+        result = left + right
+    elif op == '-':
+        result = left - right
+    elif op == '*':
+        result = left * right
+    elif op == '/':
+        result = left / right 
+    return result          
 
 
 if __name__ == "__main__":
